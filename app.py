@@ -1,8 +1,6 @@
 from flask import Flask, request, render_template, jsonify
-from werkzeug.utils import secure_filename
 import boto3
 import os
-import logging
 from datetime import datetime
 import time
 from pydub import AudioSegment
@@ -36,9 +34,8 @@ def upload_audio():
         if file.filename == '':
             return jsonify({'error': 'No selected file'})
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            app.logger.info('load file {}'.format(filename))
-            filepath = os.path.join(UPLOAD_DIRECTORY, filename)
+            app.logger.info('load file {}'.format(file.filename))
+            filepath = os.path.join(UPLOAD_DIRECTORY, file.filename)
             file.save(filepath)
             app.logger.info('file saved to {}'.format(filepath))
             s3key = uploadTos3(filepath)
@@ -59,6 +56,7 @@ def mix_audio():
         s3.download_file(bucket, 'mp3/' + file2name, 'tmp/' + file2name)
         mix_audio('tmp/'+file1name,'tmp/'+file2name)
         s3key = uploadTos3('tmp/output.mp3')
+        remove_file('/temp')
         return jsonify({'s3_key': s3key})
 
 
